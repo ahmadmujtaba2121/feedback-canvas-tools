@@ -5,7 +5,6 @@ import { FileUploadHandler } from "./FileUploadHandler";
 import { CanvasDialogs } from "./CanvasDialogs";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Paintbrush } from "lucide-react";
 
 interface CanvasProps {
   activeTool: "select" | "pin" | "text" | "draw" | null;
@@ -31,6 +30,7 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
     onLayerAdd,
   });
 
+  // Initialize canvas
   useEffect(() => {
     if (!canvasRef.current) return;
 
@@ -57,11 +57,15 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
 
     return () => {
       canvas.dispose();
+      setFabricCanvas(null);
     };
   }, []);
 
+  // Handle tool changes
   useEffect(() => {
     if (!fabricCanvas) return;
+
+    let cleanup: (() => void) | undefined;
 
     fabricCanvas.isDrawingMode = activeTool === "draw";
     fabricCanvas.selection = activeTool === "select";
@@ -86,8 +90,12 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
 
     if (activeTool === "pin" || activeTool === "text") {
       fabricCanvas.on("mouse:down", handleCanvasClick);
-      return () => fabricCanvas.off("mouse:down", handleCanvasClick);
+      cleanup = () => fabricCanvas.off("mouse:down", handleCanvasClick);
     }
+
+    return () => {
+      if (cleanup) cleanup();
+    };
   }, [activeTool, fabricCanvas, drawingColor]);
 
   const handleAddComment = () => {
