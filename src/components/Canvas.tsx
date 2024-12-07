@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Canvas as FabricCanvas } from "fabric";
+import { Canvas as FabricCanvas, Image as FabricImage, Text, Textbox, IEvent } from "fabric";
 import { toast } from "sonner";
 
 interface CanvasProps {
@@ -31,7 +31,7 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
       reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
-          const fabricImage = new fabric.Image(img);
+          const fabricImage = new FabricImage(img);
           canvas.add(fabricImage);
           canvas.renderAll();
           onLayerAdd({ type: "image", id: Date.now(), element: fabricImage });
@@ -58,9 +58,9 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
     fabricCanvas.selection = activeTool === "select";
 
     if (activeTool === "pin") {
-      const handleClick = (e: fabric.IEvent) => {
+      const handleClick = (e: IEvent) => {
         const pointer = fabricCanvas.getPointer(e.e);
-        const text = new fabric.Text("📌", {
+        const text = new Text("📌", {
           left: pointer.x,
           top: pointer.y,
           fontSize: 24,
@@ -75,9 +75,9 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
     }
 
     if (activeTool === "text") {
-      const handleClick = (e: fabric.IEvent) => {
+      const handleClick = (e: IEvent) => {
         const pointer = fabricCanvas.getPointer(e.e);
-        const text = new fabric.Textbox("Add your review here", {
+        const text = new Textbox("Add your review here", {
           left: pointer.x,
           top: pointer.y,
           width: 200,
