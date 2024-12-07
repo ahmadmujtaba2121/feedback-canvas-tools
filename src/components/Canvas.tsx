@@ -3,7 +3,9 @@ import { Canvas as FabricCanvas, Image as FabricImage, Text, Textbox, TEvent } f
 import { toast } from "sonner";
 import { FileUploadHandler } from "./FileUploadHandler";
 import { CanvasDialogs } from "./CanvasDialogs";
-import { ChromePicker } from 'react-color';
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Paintbrush } from "lucide-react";
 
 interface CanvasProps {
   activeTool: "select" | "pin" | "text" | "draw" | null;
@@ -65,6 +67,8 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
     fabricCanvas.selection = activeTool === "select";
 
     if (activeTool === "draw") {
+      // Initialize the drawing brush
+      fabricCanvas.freeDrawingBrush = new fabric.PencilBrush(fabricCanvas);
       fabricCanvas.freeDrawingBrush.color = drawingColor;
       fabricCanvas.freeDrawingBrush.width = 2;
     }
@@ -142,12 +146,24 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
         id="file-input"
       />
       {activeTool === "draw" && (
-        <div className="mb-4 p-4 bg-white rounded-lg shadow">
-          <ChromePicker
-            color={drawingColor}
-            onChange={(color) => setDrawingColor(color.hex)}
-            className="!shadow-none"
-          />
+        <div className="fixed top-4 right-4 z-10">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-12 h-12 p-2">
+                <div className="w-full h-full rounded" style={{ backgroundColor: drawingColor }} />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 border-none shadow-none">
+              <div className="p-2 bg-white rounded-lg shadow-lg">
+                <input
+                  type="color"
+                  value={drawingColor}
+                  onChange={(e) => setDrawingColor(e.target.value)}
+                  className="w-8 h-8 p-0 border-none"
+                />
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       )}
       <canvas ref={canvasRef} className="shadow-lg rounded-lg" />
