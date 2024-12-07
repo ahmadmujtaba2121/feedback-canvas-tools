@@ -1,29 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Canvas as FabricCanvas, Image as FabricImage, Text, Textbox, TEvent } from "fabric";
+import { Canvas as FabricCanvas, Image as FabricImage, Text, Textbox } from "fabric";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { FileUploadHandler } from "./FileUploadHandler";
+import { CanvasDialogs } from "./CanvasDialogs";
 
 interface CanvasProps {
   activeTool: "select" | "pin" | "text" | null;
   onLayerAdd: (layer: any) => void;
-}
-
-interface CommentData {
-  id: string;
-  author: string;
-  content: string;
-  position: { x: number; y: number };
-}
-
-interface TextData {
-  content: string;
-  fontSize: number;
-  fontFamily: string;
-  textAlign: "left" | "center" | "right";
 }
 
 export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
@@ -32,11 +15,16 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
   const [showCommentDialog, setShowCommentDialog] = useState(false);
   const [showTextDialog, setShowTextDialog] = useState(false);
   const [commentPosition, setCommentPosition] = useState({ x: 0, y: 0 });
-  const [commentData, setCommentData] = useState<Partial<CommentData>>({});
-  const [textData, setTextData] = useState<Partial<TextData>>({
+  const [commentData, setCommentData] = useState<any>({});
+  const [textData, setTextData] = useState<any>({
     fontSize: 16,
     fontFamily: "Arial",
     textAlign: "left",
+  });
+
+  const { handleDrop, handleFileInput } = FileUploadHandler({
+    fabricCanvas,
+    onLayerAdd,
   });
 
   useEffect(() => {
@@ -48,34 +36,24 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
       backgroundColor: "#ffffff",
     });
 
+    // Enable object controls
+    canvas.on('object:added', (e) => {
+      if (e.target) {
+        e.target.set({
+          cornerStyle: 'circle',
+          cornerColor: '#0ea5e9',
+          cornerStrokeColor: '#0369a1',
+          cornerSize: 12,
+          transparentCorners: false,
+          rotatingPointOffset: 40,
+        });
+      }
+    });
+
     setFabricCanvas(canvas);
-
-    const handleDrop = (e: DragEvent) => {
-      e.preventDefault();
-      const file = e.dataTransfer?.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => {
-          const fabricImage = new FabricImage(img);
-          canvas.add(fabricImage);
-          canvas.renderAll();
-          onLayerAdd({ type: "image", id: Date.now(), element: fabricImage });
-          toast.success("Image added to canvas");
-        };
-        img.src = event.target?.result as string;
-      };
-      reader.readAsDataURL(file);
-    };
-
-    canvasRef.current.addEventListener("drop", handleDrop);
-    canvasRef.current.addEventListener("dragover", (e) => e.preventDefault());
 
     return () => {
       canvas.dispose();
-      canvasRef.current?.removeEventListener("drop", handleDrop);
     };
   }, []);
 
@@ -85,26 +63,20 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
     fabricCanvas.isDrawingMode = false;
     fabricCanvas.selection = activeTool === "select";
 
-    if (activeTool === "pin") {
-      const handleClick = (e: TEvent) => {
-        const pointer = fabricCanvas.getPointer(e.e);
-        setCommentPosition({ x: pointer.x, y: pointer.y });
+    const handleCanvasClick = (e: fabric.IEvent) => {
+      const pointer = fabricCanvas.getPointer(e.e);
+      setCommentPosition({ x: pointer.x, y: pointer.y });
+
+      if (activeTool === "pin") {
         setShowCommentDialog(true);
-      };
-
-      fabricCanvas.on("mouse:down", handleClick);
-      return () => fabricCanvas.off("mouse:down", handleClick);
-    }
-
-    if (activeTool === "text") {
-      const handleClick = (e: TEvent) => {
-        const pointer = fabricCanvas.getPointer(e.e);
-        setCommentPosition({ x: pointer.x, y: pointer.y });
+      } else if (activeTool === "text") {
         setShowTextDialog(true);
-      };
+      }
+    };
 
-      fabricCanvas.on("mouse:down", handleClick);
-      return () => fabricCanvas.off("mouse:down", handleClick);
+    if (activeTool === "pin" || activeTool === "text") {
+      fabricCanvas.on("mouse:down", handleCanvasClick);
+      return () => fabricCanvas.off("mouse:down", handleCanvasClick);
     }
   }, [activeTool, fabricCanvas]);
 
@@ -151,92 +123,32 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
   };
 
   return (
-    <div className="flex-1 overflow-auto bg-gray-50 p-4">
+    <div 
+      className="flex-1 overflow-auto bg-gray-50 p-4"
+      onDrop={handleDrop}
+      onDragOver={(e) => e.preventDefault()}
+    >
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleFileInput}
+        className="hidden"
+        id="file-input"
+      />
       <canvas ref={canvasRef} className="shadow-lg rounded-lg" />
 
-      <Dialog open={showCommentDialog} onOpenChange={setShowCommentDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Comment</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              placeholder="Your name"
-              value={commentData.author || ""}
-              onChange={(e) => setCommentData({ ...commentData, author: e.target.value })}
-            />
-            <Textarea
-              placeholder="Write your comment..."
-              value={commentData.content || ""}
-              onChange={(e) => setCommentData({ ...commentData, content: e.target.value })}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCommentDialog(false)}>Cancel</Button>
-            <Button onClick={handleAddComment}>Add Comment</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showTextDialog} onOpenChange={setShowTextDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Text</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Textarea
-              placeholder="Enter your text..."
-              value={textData.content || ""}
-              onChange={(e) => setTextData({ ...textData, content: e.target.value })}
-            />
-            <Select
-              value={textData.fontFamily}
-              onValueChange={(value) => setTextData({ ...textData, fontFamily: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Font Family" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Arial">Arial</SelectItem>
-                <SelectItem value="Times New Roman">Times New Roman</SelectItem>
-                <SelectItem value="Courier New">Courier New</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={String(textData.fontSize)}
-              onValueChange={(value) => setTextData({ ...textData, fontSize: Number(value) })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Font Size" />
-              </SelectTrigger>
-              <SelectContent>
-                {[12, 14, 16, 18, 20, 24, 28, 32].map((size) => (
-                  <SelectItem key={size} value={String(size)}>
-                    {size}px
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={textData.textAlign}
-              onValueChange={(value) => setTextData({ ...textData, textAlign: value as any })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Text Align" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="left">Left</SelectItem>
-                <SelectItem value="center">Center</SelectItem>
-                <SelectItem value="right">Right</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowTextDialog(false)}>Cancel</Button>
-            <Button onClick={handleAddText}>Add Text</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CanvasDialogs
+        showCommentDialog={showCommentDialog}
+        setShowCommentDialog={setShowCommentDialog}
+        showTextDialog={showTextDialog}
+        setShowTextDialog={setShowTextDialog}
+        commentData={commentData}
+        setCommentData={setCommentData}
+        textData={textData}
+        setTextData={setTextData}
+        handleAddComment={handleAddComment}
+        handleAddText={handleAddText}
+      />
     </div>
   );
 };

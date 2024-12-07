@@ -1,4 +1,4 @@
-import { Layers, Image, Type, Pin, Trash2 } from "lucide-react";
+import { Layers, Image, Type, Pin, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface LayersPanelProps {
@@ -28,11 +28,26 @@ export const LayersPanel = ({ layers, onLayersChange }: LayersPanelProps) => {
     }
   };
 
+  const handleUploadClick = () => {
+    document.getElementById('file-input')?.click();
+  };
+
   return (
     <div className="w-64 bg-white border-l p-4">
-      <div className="flex items-center gap-2 mb-4 text-slate-800">
-        <Layers className="w-5 h-5" />
-        <h2 className="font-semibold">Layers</h2>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2 text-slate-800">
+          <Layers className="w-5 h-5" />
+          <h2 className="font-semibold">Layers</h2>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleUploadClick}
+          className="flex items-center gap-1"
+        >
+          <Upload className="w-4 h-4" />
+          Upload
+        </Button>
       </div>
 
       <div className="space-y-2">
