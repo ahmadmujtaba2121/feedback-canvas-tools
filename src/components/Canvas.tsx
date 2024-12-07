@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Canvas as FabricCanvas, Image as FabricImage, Text, Textbox, IEvent } from "fabric";
+import { Canvas as FabricCanvas, Image as FabricImage, Text, Textbox, TEvent } from "fabric";
 import { toast } from "sonner";
 import { FileUploadHandler } from "./FileUploadHandler";
 import { CanvasDialogs } from "./CanvasDialogs";
+import { ChromePicker } from 'react-color';
 
 interface CanvasProps {
-  activeTool: "select" | "pin" | "text" | null;
+  activeTool: "select" | "pin" | "text" | "draw" | null;
   onLayerAdd: (layer: any) => void;
 }
 
@@ -21,6 +22,7 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
     fontFamily: "Arial",
     textAlign: "left",
   });
+  const [drawingColor, setDrawingColor] = useState("#000000");
 
   const { handleDrop, handleFileInput } = FileUploadHandler({
     fabricCanvas,
@@ -59,10 +61,15 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
   useEffect(() => {
     if (!fabricCanvas) return;
 
-    fabricCanvas.isDrawingMode = false;
+    fabricCanvas.isDrawingMode = activeTool === "draw";
     fabricCanvas.selection = activeTool === "select";
 
-    const handleCanvasClick = (e: IEvent) => {
+    if (activeTool === "draw") {
+      fabricCanvas.freeDrawingBrush.color = drawingColor;
+      fabricCanvas.freeDrawingBrush.width = 2;
+    }
+
+    const handleCanvasClick = (e: TEvent) => {
       const pointer = fabricCanvas.getPointer(e.e);
       setCommentPosition({ x: pointer.x, y: pointer.y });
 
@@ -77,7 +84,7 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
       fabricCanvas.on("mouse:down", handleCanvasClick);
       return () => fabricCanvas.off("mouse:down", handleCanvasClick);
     }
-  }, [activeTool, fabricCanvas]);
+  }, [activeTool, fabricCanvas, drawingColor]);
 
   const handleAddComment = () => {
     if (!fabricCanvas || !commentData.author || !commentData.content) return;
@@ -134,6 +141,15 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
         className="hidden"
         id="file-input"
       />
+      {activeTool === "draw" && (
+        <div className="mb-4 p-4 bg-white rounded-lg shadow">
+          <ChromePicker
+            color={drawingColor}
+            onChange={(color) => setDrawingColor(color.hex)}
+            className="!shadow-none"
+          />
+        </div>
+      )}
       <canvas ref={canvasRef} className="shadow-lg rounded-lg" />
 
       <CanvasDialogs
