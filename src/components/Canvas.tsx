@@ -55,7 +55,18 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
 
     setFabricCanvas(canvas);
 
+    const handleResize = () => {
+      canvas.setDimensions({
+        width: window.innerWidth - 400,
+        height: window.innerHeight - 100,
+      });
+      canvas.renderAll();
+    };
+
+    window.addEventListener('resize', handleResize);
+
     return () => {
+      window.removeEventListener('resize', handleResize);
       canvas.dispose();
       setFabricCanvas(null);
     };
@@ -67,14 +78,19 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
 
     let cleanup: (() => void) | undefined;
 
-    fabricCanvas.isDrawingMode = activeTool === "draw";
-    fabricCanvas.selection = activeTool === "select";
+    // Reset previous mode
+    fabricCanvas.isDrawingMode = false;
+    fabricCanvas.selection = false;
 
+    // Set new mode
     if (activeTool === "draw") {
+      fabricCanvas.isDrawingMode = true;
       const brush = new PencilBrush(fabricCanvas);
       brush.color = drawingColor;
       brush.width = 2;
       fabricCanvas.freeDrawingBrush = brush;
+    } else if (activeTool === "select") {
+      fabricCanvas.selection = true;
     }
 
     const handleCanvasClick = (e: TEvent) => {
