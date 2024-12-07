@@ -7,7 +7,7 @@ import { Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 const Index = () => {
-  const [activeTool, setActiveTool] = useState<"select" | "pin" | "text" | "draw" | null>(null);
+  const [activeTool, setActiveTool] = useState<"select" | "pin" | "text" | null>(null);
   const [layers, setLayers] = useState<any[]>([]);
 
   const handleSave = () => {

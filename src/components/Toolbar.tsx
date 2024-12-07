@@ -1,10 +1,10 @@
-import { MousePointer, PinIcon, Type, Save, Pencil } from "lucide-react";
+import { MousePointer, PinIcon, Type, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface ToolbarProps {
-  activeTool: "select" | "pin" | "text" | "draw" | null;
-  onToolSelect: (tool: "select" | "pin" | "text" | "draw" | null) => void;
+  activeTool: "select" | "pin" | "text" | null;
+  onToolSelect: (tool: "select" | "pin" | "text" | null) => void;
   onSave: () => void;
 }
 
@@ -13,7 +13,6 @@ export const Toolbar = ({ activeTool, onToolSelect, onSave }: ToolbarProps) => {
     { id: "select", icon: MousePointer, label: "Select" },
     { id: "pin", icon: PinIcon, label: "Add Pin" },
     { id: "text", icon: Type, label: "Add Text" },
-    { id: "draw", icon: Pencil, label: "Draw" },
   ] as const;
 
   return (

@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Canvas as FabricCanvas, PencilBrush, Image as FabricImage, Text, Textbox, TEvent } from "fabric";
+import { Canvas as FabricCanvas, Image as FabricImage, Text, Textbox, TEvent } from "fabric";
 import { toast } from "sonner";
 import { FileUploadHandler } from "./FileUploadHandler";
 import { CanvasDialogs } from "./CanvasDialogs";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface CanvasProps {
-  activeTool: "select" | "pin" | "text" | "draw" | null;
+  activeTool: "select" | "pin" | "text" | null;
   onLayerAdd: (layer: any) => void;
 }
 
@@ -23,7 +21,6 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
     fontFamily: "Arial",
     textAlign: "left",
   });
-  const [drawingColor, setDrawingColor] = useState("#000000");
 
   const { handleDrop, handleFileInput } = FileUploadHandler({
     fabricCanvas,
@@ -79,17 +76,10 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
     let cleanup: (() => void) | undefined;
 
     // Reset previous mode
-    fabricCanvas.isDrawingMode = false;
     fabricCanvas.selection = false;
 
     // Set new mode
-    if (activeTool === "draw") {
-      fabricCanvas.isDrawingMode = true;
-      const brush = new PencilBrush(fabricCanvas);
-      brush.color = drawingColor;
-      brush.width = 2;
-      fabricCanvas.freeDrawingBrush = brush;
-    } else if (activeTool === "select") {
+    if (activeTool === "select") {
       fabricCanvas.selection = true;
     }
 
@@ -112,7 +102,7 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
     return () => {
       if (cleanup) cleanup();
     };
-  }, [activeTool, fabricCanvas, drawingColor]);
+  }, [activeTool, fabricCanvas]);
 
   const handleAddComment = () => {
     if (!fabricCanvas || !commentData.author || !commentData.content) return;
@@ -169,27 +159,6 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
         className="hidden"
         id="file-input"
       />
-      {activeTool === "draw" && (
-        <div className="fixed top-4 right-4 z-10">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-12 h-12 p-2">
-                <div className="w-full h-full rounded" style={{ backgroundColor: drawingColor }} />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 border-none shadow-none">
-              <div className="p-2 bg-white rounded-lg shadow-lg">
-                <input
-                  type="color"
-                  value={drawingColor}
-                  onChange={(e) => setDrawingColor(e.target.value)}
-                  className="w-8 h-8 p-0 border-none"
-                />
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-      )}
       <canvas ref={canvasRef} className="shadow-lg rounded-lg" />
 
       <CanvasDialogs
