@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Canvas as FabricCanvas, Image as FabricImage, Text, Textbox } from "fabric";
+import { Canvas as FabricCanvas, Image as FabricImage, Text, Textbox, IEvent } from "fabric";
 import { toast } from "sonner";
 import { FileUploadHandler } from "./FileUploadHandler";
 import { CanvasDialogs } from "./CanvasDialogs";
@@ -36,7 +36,6 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
       backgroundColor: "#ffffff",
     });
 
-    // Enable object controls
     canvas.on('object:added', (e) => {
       if (e.target) {
         e.target.set({
@@ -63,7 +62,7 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
     fabricCanvas.isDrawingMode = false;
     fabricCanvas.selection = activeTool === "select";
 
-    const handleCanvasClick = (e: fabric.IEvent) => {
+    const handleCanvasClick = (e: IEvent) => {
       const pointer = fabricCanvas.getPointer(e.e);
       setCommentPosition({ x: pointer.x, y: pointer.y });
 

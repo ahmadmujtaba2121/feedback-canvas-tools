@@ -1,9 +1,9 @@
 import { useCallback } from "react";
-import { Image as FabricImage } from "fabric";
+import { Canvas, Image as FabricImage } from "fabric";
 import { toast } from "sonner";
 
 interface FileUploadHandlerProps {
-  fabricCanvas: fabric.Canvas | null;
+  fabricCanvas: Canvas | null;
   onLayerAdd: (layer: any) => void;
 }
 
