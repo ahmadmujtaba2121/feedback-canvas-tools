@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Canvas as FabricCanvas, Image as FabricImage, Text, Textbox, TEvent } from "fabric";
+import { Canvas as FabricCanvas, PencilBrush, Image as FabricImage, Text, Textbox, TEvent } from "fabric";
 import { toast } from "sonner";
 import { FileUploadHandler } from "./FileUploadHandler";
 import { CanvasDialogs } from "./CanvasDialogs";
@@ -67,10 +67,10 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
     fabricCanvas.selection = activeTool === "select";
 
     if (activeTool === "draw") {
-      // Initialize the drawing brush
-      fabricCanvas.freeDrawingBrush = new fabric.PencilBrush(fabricCanvas);
-      fabricCanvas.freeDrawingBrush.color = drawingColor;
-      fabricCanvas.freeDrawingBrush.width = 2;
+      const brush = new PencilBrush(fabricCanvas);
+      brush.color = drawingColor;
+      brush.width = 2;
+      fabricCanvas.freeDrawingBrush = brush;
     }
 
     const handleCanvasClick = (e: TEvent) => {
