@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Canvas } from "@/components/Canvas";
 import { Toolbar } from "@/components/Toolbar";
 import { LayersPanel } from "@/components/LayersPanel";
+import { ChatPanel } from "@/components/chat/ChatPanel";
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
 import { toast } from "sonner";
@@ -24,6 +25,7 @@ const Index = () => {
 
   return (
     <div className="flex h-screen bg-slate-50">
+      <ChatPanel />
       <Toolbar activeTool={activeTool} onToolSelect={setActiveTool} onSave={handleSave} />
       
       <main className="flex-1 flex flex-col">
