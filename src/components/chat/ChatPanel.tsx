@@ -9,7 +9,6 @@ import { toast } from "sonner";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Check if Supabase credentials are available
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Supabase credentials are missing. Please check your environment variables.');
 }
@@ -23,13 +22,13 @@ interface Message {
   content: string;
   created_at: string;
   user_id: string;
+  author_name?: string;
 }
 
 export const ChatPanel = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isSupabaseConfigured, setIsSupabaseConfigured] = useState(!!supabase);
+  const [authorName, setAuthorName] = useState(localStorage.getItem('authorName') || "");
 
   useEffect(() => {
     if (!supabase) {
@@ -87,7 +86,10 @@ export const ChatPanel = () => {
       return;
     }
 
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !authorName.trim()) {
+      toast.error("Please enter both a message and your name");
+      return;
+    }
 
     console.log('Sending message:', newMessage);
     const { error } = await supabase
@@ -95,8 +97,9 @@ export const ChatPanel = () => {
       .insert([
         {
           content: newMessage,
-          user_id: 'anonymous', // Replace with actual user ID when auth is implemented
-          created_at: new Date().toISOString() // Add the created_at field
+          user_id: authorName,
+          created_at: new Date().toISOString(),
+          author_name: authorName
         }
       ]);
 
@@ -107,74 +110,60 @@ export const ChatPanel = () => {
     }
 
     setNewMessage("");
+    localStorage.setItem('authorName', authorName);
   };
 
   return (
-    <div className={`bg-white border-r transition-all duration-300 ${isCollapsed ? "w-12" : "w-64"}`}>
-      <div className="flex items-center justify-between p-4 border-b">
-        {!isCollapsed && (
-          <div className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5" />
-            <h2 className="font-semibold">Chat</h2>
-          </div>
-        )}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-2"
-        >
-          <MessageSquare className="w-4 h-4" />
-        </Button>
+    <div className="border-t bg-white p-4 h-80">
+      <div className="flex items-center gap-2 mb-4">
+        <MessageSquare className="w-5 h-5" />
+        <h2 className="font-semibold">Chat</h2>
       </div>
 
-      {!isCollapsed && (
-        <>
-          {!isSupabaseConfigured ? (
-            <div className="p-4 text-sm text-red-500">
-              Chat is currently unavailable. Please check Supabase configuration.
-            </div>
-          ) : (
-            <>
-              <ScrollArea className="h-[calc(100vh-8rem)] p-4">
-                <div className="space-y-4">
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className="bg-slate-50 rounded-lg p-3"
-                    >
-                      <p className="text-sm text-slate-600">{message.content}</p>
-                      <span className="text-xs text-slate-400">
-                        {new Date(message.created_at).toLocaleTimeString()}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-
-              <div className="p-4 border-t">
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    sendMessage();
-                  }}
-                  className="flex gap-2"
-                >
-                  <Input
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type a message..."
-                    className="flex-1"
-                  />
-                  <Button type="submit" size="icon">
-                    <Send className="w-4 h-4" />
-                  </Button>
-                </form>
+      <ScrollArea className="h-48 mb-4 p-2 border rounded-md">
+        <div className="space-y-4">
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className="bg-slate-50 rounded-lg p-3"
+            >
+              <div className="font-medium text-sm text-blue-600 mb-1">
+                {message.author_name || message.user_id}
               </div>
-            </>
-          )}
-        </>
-      )}
+              <p className="text-sm text-slate-600">{message.content}</p>
+              <span className="text-xs text-slate-400">
+                {new Date(message.created_at).toLocaleTimeString()}
+              </span>
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+
+      <div className="space-y-2">
+        <Input
+          value={authorName}
+          onChange={(e) => setAuthorName(e.target.value)}
+          placeholder="Your name..."
+          className="mb-2"
+        />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            sendMessage();
+          }}
+          className="flex gap-2"
+        >
+          <Input
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Type a message..."
+            className="flex-1"
+          />
+          <Button type="submit" size="icon">
+            <Send className="w-4 h-4" />
+          </Button>
+        </form>
+      </div>
     </div>
   );
 };

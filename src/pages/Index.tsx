@@ -25,7 +25,6 @@ const Index = () => {
 
   return (
     <div className="flex h-screen bg-slate-50">
-      <ChatPanel />
       <Toolbar activeTool={activeTool} onToolSelect={setActiveTool} onSave={handleSave} />
       
       <main className="flex-1 flex flex-col">
@@ -44,7 +43,10 @@ const Index = () => {
         </div>
         
         <div className="flex-1 flex overflow-hidden">
-          <Canvas activeTool={activeTool} onLayerAdd={(layer) => setLayers([...layers, layer])} />
+          <div className="flex-1 flex flex-col">
+            <Canvas activeTool={activeTool} onLayerAdd={(layer) => setLayers([...layers, layer])} />
+            <ChatPanel />
+          </div>
           <LayersPanel layers={layers} onLayersChange={setLayers} />
         </div>
       </main>
