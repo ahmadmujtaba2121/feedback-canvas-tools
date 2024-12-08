@@ -27,13 +27,13 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
     onLayerAdd,
   });
 
-  // Initialize canvas
+  // Initialize canvas with fixed dimensions
   useEffect(() => {
     if (!canvasRef.current) return;
 
     const canvas = new FabricCanvas(canvasRef.current, {
-      width: window.innerWidth - 400,
-      height: window.innerHeight - 100,
+      width: 1920,
+      height: 1080,
       backgroundColor: "#ffffff",
     });
 
@@ -52,18 +52,7 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
 
     setFabricCanvas(canvas);
 
-    const handleResize = () => {
-      canvas.setDimensions({
-        width: window.innerWidth - 400,
-        height: window.innerHeight - 100,
-      });
-      canvas.renderAll();
-    };
-
-    window.addEventListener('resize', handleResize);
-
     return () => {
-      window.removeEventListener('resize', handleResize);
       canvas.dispose();
       setFabricCanvas(null);
     };
@@ -159,7 +148,9 @@ export const Canvas = ({ activeTool, onLayerAdd }: CanvasProps) => {
         className="hidden"
         id="file-input"
       />
-      <canvas ref={canvasRef} className="shadow-lg rounded-lg" />
+      <div className="overflow-auto">
+        <canvas ref={canvasRef} className="shadow-lg rounded-lg" />
+      </div>
 
       <CanvasDialogs
         showCommentDialog={showCommentDialog}

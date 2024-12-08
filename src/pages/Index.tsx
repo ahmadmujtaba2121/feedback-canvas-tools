@@ -11,7 +11,6 @@ const Index = () => {
   const [layers, setLayers] = useState<any[]>([]);
 
   const handleSave = () => {
-    // In a real app, this would save to a backend
     toast.success("Project saved successfully!");
   };
 
@@ -42,7 +41,7 @@ const Index = () => {
           </div>
         </div>
         
-        <div className="flex-1 flex">
+        <div className="flex-1 flex overflow-hidden">
           <Canvas activeTool={activeTool} onLayerAdd={(layer) => setLayers([...layers, layer])} />
           <LayersPanel layers={layers} onLayersChange={setLayers} />
         </div>
