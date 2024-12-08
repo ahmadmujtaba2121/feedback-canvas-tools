@@ -95,7 +95,8 @@ export const ChatPanel = () => {
       .insert([
         {
           content: newMessage,
-          user_id: 'anonymous' // Replace with actual user ID when auth is implemented
+          user_id: 'anonymous', // Replace with actual user ID when auth is implemented
+          created_at: new Date().toISOString() // Add the created_at field
         }
       ]);
 
