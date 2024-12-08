@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Layers, Image, Type, Pin, Trash2, Upload, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface LayersPanelProps {
   layers: any[];
