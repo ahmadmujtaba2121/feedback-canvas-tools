@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, KeyboardEvent } from "react";
 import { MessageSquare, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase credentials are missing. Please check your environment variables.');
+  console.error('Supabase credentials are missing');
 }
 
 const supabase = supabaseUrl && supabaseAnonKey 
@@ -32,11 +32,10 @@ export const ChatPanel = () => {
 
   useEffect(() => {
     if (!supabase) {
-      toast.error("Chat is currently unavailable - Supabase configuration missing");
+      toast.error("Chat is currently unavailable");
       return;
     }
 
-    // Subscribe to new messages
     const channel = supabase
       .channel('chat_messages')
       .on(
@@ -47,15 +46,12 @@ export const ChatPanel = () => {
           table: 'messages'
         },
         (payload) => {
-          console.log('New message received:', payload);
           setMessages(prev => [...prev, payload.new as Message]);
         }
       )
       .subscribe();
 
-    // Fetch existing messages
     const fetchMessages = async () => {
-      console.log('Fetching messages...');
       const { data, error } = await supabase
         .from('messages')
         .select('*')
@@ -67,16 +63,13 @@ export const ChatPanel = () => {
         return;
       }
 
-      console.log('Messages fetched:', data);
       setMessages(data || []);
     };
 
     fetchMessages();
 
     return () => {
-      if (supabase) {
-        supabase.removeChannel(channel);
-      }
+      supabase?.removeChannel(channel);
     };
   }, []);
 
@@ -91,15 +84,14 @@ export const ChatPanel = () => {
       return;
     }
 
-    console.log('Sending message:', newMessage);
     const { error } = await supabase
       .from('messages')
       .insert([
         {
           content: newMessage,
           user_id: authorName,
-          created_at: new Date().toISOString(),
-          author_name: authorName
+          author_name: authorName,
+          created_at: new Date().toISOString()
         }
       ]);
 
@@ -111,6 +103,13 @@ export const ChatPanel = () => {
 
     setNewMessage("");
     localStorage.setItem('authorName', authorName);
+  };
+
+  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
   };
 
   return (
@@ -156,6 +155,7 @@ export const ChatPanel = () => {
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
             placeholder="Type a message..."
             className="flex-1"
           />
