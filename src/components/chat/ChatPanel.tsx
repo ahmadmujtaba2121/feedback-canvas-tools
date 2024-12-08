@@ -48,6 +48,7 @@ export const ChatPanel = () => {
           table: 'messages'
         },
         (payload) => {
+          console.log('New message received:', payload);
           setMessages(prev => [...prev, payload.new as Message]);
         }
       )
@@ -55,16 +56,19 @@ export const ChatPanel = () => {
 
     // Fetch existing messages
     const fetchMessages = async () => {
+      console.log('Fetching messages...');
       const { data, error } = await supabase
         .from('messages')
         .select('*')
         .order('created_at', { ascending: true });
 
       if (error) {
+        console.error('Error fetching messages:', error);
         toast.error("Failed to load messages");
         return;
       }
 
+      console.log('Messages fetched:', data);
       setMessages(data || []);
     };
 
@@ -85,6 +89,7 @@ export const ChatPanel = () => {
 
     if (!newMessage.trim()) return;
 
+    console.log('Sending message:', newMessage);
     const { error } = await supabase
       .from('messages')
       .insert([
@@ -95,6 +100,7 @@ export const ChatPanel = () => {
       ]);
 
     if (error) {
+      console.error('Error sending message:', error);
       toast.error("Failed to send message");
       return;
     }
