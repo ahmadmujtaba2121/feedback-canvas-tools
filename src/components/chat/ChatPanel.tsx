@@ -6,10 +6,17 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Check if Supabase credentials are available
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Supabase credentials are missing. Please check your environment variables.');
+}
+
+const supabase = supabaseUrl && supabaseAnonKey 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 interface Message {
   id: number;
@@ -22,8 +29,14 @@ export const ChatPanel = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isSupabaseConfigured, setIsSupabaseConfigured] = useState(!!supabase);
 
   useEffect(() => {
+    if (!supabase) {
+      toast.error("Chat is currently unavailable - Supabase configuration missing");
+      return;
+    }
+
     // Subscribe to new messages
     const channel = supabase
       .channel('chat_messages')
@@ -58,11 +71,18 @@ export const ChatPanel = () => {
     fetchMessages();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (supabase) {
+        supabase.removeChannel(channel);
+      }
     };
   }, []);
 
   const sendMessage = async () => {
+    if (!supabase) {
+      toast.error("Chat is currently unavailable");
+      return;
+    }
+
     if (!newMessage.trim()) return;
 
     const { error } = await supabase
@@ -103,41 +123,49 @@ export const ChatPanel = () => {
 
       {!isCollapsed && (
         <>
-          <ScrollArea className="h-[calc(100vh-8rem)] p-4">
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className="bg-slate-50 rounded-lg p-3"
-                >
-                  <p className="text-sm text-slate-600">{message.content}</p>
-                  <span className="text-xs text-slate-400">
-                    {new Date(message.created_at).toLocaleTimeString()}
-                  </span>
-                </div>
-              ))}
+          {!isSupabaseConfigured ? (
+            <div className="p-4 text-sm text-red-500">
+              Chat is currently unavailable. Please check Supabase configuration.
             </div>
-          </ScrollArea>
+          ) : (
+            <>
+              <ScrollArea className="h-[calc(100vh-8rem)] p-4">
+                <div className="space-y-4">
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className="bg-slate-50 rounded-lg p-3"
+                    >
+                      <p className="text-sm text-slate-600">{message.content}</p>
+                      <span className="text-xs text-slate-400">
+                        {new Date(message.created_at).toLocaleTimeString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
 
-          <div className="p-4 border-t">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                sendMessage();
-              }}
-              className="flex gap-2"
-            >
-              <Input
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type a message..."
-                className="flex-1"
-              />
-              <Button type="submit" size="icon">
-                <Send className="w-4 h-4" />
-              </Button>
-            </form>
-          </div>
+              <div className="p-4 border-t">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    sendMessage();
+                  }}
+                  className="flex gap-2"
+                >
+                  <Input
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Type a message..."
+                    className="flex-1"
+                  />
+                  <Button type="submit" size="icon">
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </form>
+              </div>
+            </>
+          )}
         </>
       )}
     </div>
